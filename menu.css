@@ -1,0 +1,30 @@
+#about a{
+    display: block;
+    background-color: rgb(38, 227, 28);
+    padding: 10px;
+    border-radius: 5px;
+    margin: 5px 0;
+    color: white;
+}
+#home a{
+    display: float;
+    background-color: orangered;
+    margin: 5px 0;
+    padding: 10px;
+    border-radius: 0px;
+    color: white;
+}
+#bye a{display: float;
+    background-color: lightgreen;
+    margin: 5px 0;
+    padding: 10px;
+    border-radius: 0px;
+    color: white;}
+#hi a{
+    display: float;
+    background-color: purple;
+    margin: 5px 0;
+    padding: 10px;
+    border-radius: 0px;
+    color: white;
+}
