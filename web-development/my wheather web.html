@@ -1,0 +1,837 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>भारत मौसम | India Weather Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;500;600&family=Noto+Sans+Devanagari:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+:root{
+  --bg:#f4f6fb;--card:#fff;--border:#e2e8f0;--text:#1a202c;--text2:#4a5568;--text3:#718096;
+  --blue:#2b6cb0;--bl:#ebf4ff;--green:#276749;--gl:#f0fff4;--orange:#c05621;--ol:#fffaf0;
+  --red:#c53030;--rl:#fff5f5;--amber:#b7791f;--aml:#fffff0;--purple:#553c9a;--pl:#faf5ff;
+  --teal:#2c7a7b;--tl:#e6fffa;--pink:#97266d;--pkl:#fff5f7;
+  --radius:12px;--rsm:8px;--sh:0 1px 3px rgba(0,0,0,.08),0 1px 2px rgba(0,0,0,.04);
+}
+[data-theme="dark"]{
+  --bg:#0f1117;--card:#1a1d2e;--border:#2d3748;--text:#f7fafc;--text2:#a0aec0;--text3:#718096;
+  --blue:#63b3ed;--bl:#1a365d;--green:#68d391;--gl:#1c4532;--orange:#f6ad55;--ol:#7b341e;
+  --red:#fc8181;--rl:#742a2a;--amber:#f6e05e;--aml:#744210;--purple:#b794f4;--pl:#322659;
+  --teal:#4fd1c5;--tl:#1d4044;--pink:#f687b3;--pkl:#521b41;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Noto Sans','Noto Sans Devanagari',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;transition:background .3s,color .3s}
+header{background:var(--card);border-bottom:1px solid var(--border);padding:14px 20px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;position:sticky;top:0;z-index:100;box-shadow:var(--sh)}
+.logo{display:flex;align-items:center;gap:10px}
+.logo-icon{font-size:26px}
+.logo-text{font-size:16px;font-weight:600}
+.logo-sub{font-size:11px;color:var(--text3)}
+.theme-btn{background:var(--bg);border:1px solid var(--border);border-radius:20px;padding:6px 12px;cursor:pointer;font-size:13px;color:var(--text2)}
+.main{max-width:1000px;margin:0 auto;padding:16px}
+.srch{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:16px;margin-bottom:16px;box-shadow:var(--sh)}
+.srow{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px}
+.sinput{flex:1;min-width:180px;padding:10px 14px;border:1px solid var(--border);border-radius:var(--rsm);font-size:14px;background:var(--bg);color:var(--text);outline:none;font-family:inherit}
+.sinput:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(66,153,225,.15)}
+.btn{padding:10px 16px;border:1px solid var(--border);border-radius:var(--rsm);background:var(--card);color:var(--text);cursor:pointer;font-size:13px;font-family:inherit;display:inline-flex;align-items:center;gap:5px;transition:background .15s}
+.btn:hover{background:var(--bg)}
+.btnp{background:#2b6cb0;color:#fff;border-color:#2b6cb0}
+.btnp:hover{background:#2c5282}
+.btng{background:var(--gl);color:var(--green);border-color:var(--green)}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{font-size:12px;padding:5px 11px;border-radius:20px;border:1px solid var(--border);background:var(--bg);color:var(--text2);cursor:pointer;transition:all .15s}
+.chip:hover{border-color:var(--blue);color:var(--blue)}
+.chip.active{background:var(--bl);color:var(--blue);border-color:var(--blue)}
+.errmsg{font-size:13px;color:var(--red);margin-top:8px;min-height:16px}
+.lbox{background:var(--card);border-radius:var(--radius);padding:48px 20px;text-align:center;color:var(--text3);border:1px solid var(--border)}
+.lspin{width:36px;height:36px;border:3px solid var(--border);border-top-color:var(--blue);border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 12px}
+@keyframes spin{to{transform:rotate(360deg)}}
+.locbar{display:flex;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:14px}
+.locname{font-size:22px;font-weight:600}
+.locsub{font-size:13px;color:var(--text3)}
+.badge{font-size:11px;padding:3px 10px;border-radius:20px;display:inline-flex;align-items:center;gap:4px}
+.blive{background:var(--gl);color:var(--green)}
+.bdemo{background:var(--aml);color:var(--amber)}
+.bapx{background:var(--pl);color:var(--purple)}
+.stitle{font-size:13px;font-weight:600;color:var(--text2);margin-bottom:8px;display:flex;align-items:center;gap:6px}
+.updated{font-size:11px;color:var(--text3);margin-bottom:12px}
+
+/* TODAY PRECAUTIONS */
+.ag{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:8px;margin-bottom:14px}
+.ac{border-radius:var(--rsm);padding:10px 13px;font-size:13px;display:flex;gap:8px;align-items:flex-start;border:1px solid transparent}
+.ac .ai{font-size:18px;flex-shrink:0;margin-top:1px}
+.ac .at{font-weight:600;font-size:12px;margin-bottom:2px}
+.ac .ad{font-size:12px;opacity:.85}
+.ared{background:var(--rl);color:var(--red);border-color:var(--red)}
+.aorg{background:var(--ol);color:var(--orange);border-color:var(--orange)}
+.aamb{background:var(--aml);color:var(--amber);border-color:var(--amber)}
+.agrn{background:var(--gl);color:var(--green);border-color:var(--green)}
+.ablu{background:var(--bl);color:var(--blue);border-color:var(--blue)}
+.aprl{background:var(--pl);color:var(--purple);border-color:var(--purple)}
+.ateal{background:var(--tl);color:var(--teal);border-color:var(--teal)}
+.apnk{background:var(--pkl);color:var(--pink);border-color:var(--pink)}
+
+/* METRICS */
+.mg{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:10px;margin-bottom:14px}
+.mc{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:13px 15px;box-shadow:var(--sh)}
+.micon{font-size:20px;margin-bottom:6px}
+.mhi{font-size:11px;color:var(--text3);margin-bottom:1px}
+.mlbl{font-size:11px;color:var(--text2);margin-bottom:4px;font-weight:500}
+.mval{font-size:24px;font-weight:600;color:var(--text)}
+.munit{font-size:12px;font-weight:400;color:var(--text3);margin-left:1px}
+.msub{font-size:11px;color:var(--text3);margin-top:3px}
+
+/* CHARTS */
+.cg{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
+.cc{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:14px;box-shadow:var(--sh)}
+.ctitle{font-size:12px;font-weight:600;color:var(--text2);margin-bottom:10px}
+.cw{position:relative;height:140px}
+.cw-tall{position:relative;height:180px}
+
+/* DAY/NIGHT GRAPH */
+.dn-wrap{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:14px;margin-bottom:14px;box-shadow:var(--sh)}
+.dn-legend{display:flex;flex-wrap:wrap;gap:12px;margin-bottom:10px;font-size:12px;color:var(--text2)}
+.dn-dot{width:10px;height:10px;border-radius:2px;display:inline-block;margin-right:4px}
+
+/* DONT GO OUTSIDE TIMELINE */
+.dgo-wrap{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:16px;margin-bottom:14px;box-shadow:var(--sh)}
+.dgo-title{font-size:13px;font-weight:600;color:var(--text2);margin-bottom:12px;display:flex;align-items:center;gap:6px}
+.dgo-timeline{display:flex;flex-direction:column;gap:6px}
+.dgo-hour{display:grid;grid-template-columns:64px 1fr auto;align-items:center;gap:10px;padding:6px 10px;border-radius:var(--rsm);font-size:12px}
+.dgo-safe{background:var(--gl);color:var(--green)}
+.dgo-caution{background:var(--aml);color:var(--amber)}
+.dgo-danger{background:var(--rl);color:var(--red)}
+.dgo-night{background:var(--bl);color:var(--blue)}
+.dgo-hr-label{font-weight:600;font-size:13px}
+.dgo-bar{height:8px;border-radius:4px;background:currentColor;opacity:0.35;min-width:4px}
+.dgo-status{font-size:11px;font-weight:600;white-space:nowrap}
+.dgo-desc{font-size:11px;opacity:.85;grid-column:1/-1;padding-left:74px;margin-top:-2px}
+
+/* UPCOMING ALERTS */
+.ua-wrap{margin-bottom:16px}
+.ua-hdr{display:flex;align-items:center;gap:8px;font-size:14px;font-weight:600;color:var(--text);background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:12px 16px;margin-bottom:10px;box-shadow:var(--sh)}
+.pulse{width:10px;height:10px;border-radius:50%;background:#c53030;animation:pulse 1.4s ease infinite;flex-shrink:0}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.4;transform:scale(1.4)}}
+.ua-list{display:flex;flex-direction:column;gap:8px}
+.ua-item{border-radius:var(--rsm);border:1px solid transparent;padding:12px 14px;display:grid;grid-template-columns:36px 1fr auto;align-items:start;gap:10px}
+.ua-icon{font-size:22px;line-height:1}
+.ua-title{font-size:13px;font-weight:600;margin-bottom:3px}
+.ua-desc{font-size:12px;opacity:.88;line-height:1.5}
+.ua-act{font-size:11px;margin-top:5px;opacity:.8;font-style:italic}
+.ua-when{font-size:11px;font-weight:600;white-space:nowrap;padding:3px 8px;border-radius:20px;background:rgba(0,0,0,.08);align-self:flex-start;margin-top:2px}
+.u-red{background:var(--rl);color:var(--red);border-color:var(--red)}
+.u-org{background:var(--ol);color:var(--orange);border-color:var(--orange)}
+.u-amb{background:var(--aml);color:var(--amber);border-color:var(--amber)}
+.u-blu{background:var(--bl);color:var(--blue);border-color:var(--blue)}
+.u-grn{background:var(--gl);color:var(--green);border-color:var(--green)}
+.u-prl{background:var(--pl);color:var(--purple);border-color:var(--purple)}
+.u-tel{background:var(--tl);color:var(--teal);border-color:var(--teal)}
+.u-pnk{background:var(--pkl);color:var(--pink);border-color:var(--pink)}
+.noalert{background:var(--gl);color:var(--green);border:1px solid var(--green);border-radius:var(--radius);padding:14px 18px;font-size:13px;font-weight:500;display:flex;align-items:center;gap:10px}
+
+/* CYCLONE / MONSOON SPECIAL BANNERS */
+.special-banner{border-radius:var(--radius);padding:16px 18px;margin-bottom:10px;border:2px solid transparent;display:flex;gap:14px;align-items:flex-start}
+.sb-cyclone{background:var(--rl);color:var(--red);border-color:var(--red)}
+.sb-monsoon{background:var(--bl);color:var(--blue);border-color:var(--blue)}
+.sb-icon{font-size:32px;flex-shrink:0}
+.sb-body .sb-title{font-size:15px;font-weight:600;margin-bottom:4px}
+.sb-body .sb-desc{font-size:13px;opacity:.9;line-height:1.6}
+.sb-body .sb-do{font-size:12px;margin-top:8px;font-weight:600}
+.sb-body .sb-steps{font-size:12px;margin-top:4px;line-height:1.8;opacity:.88}
+
+/* 10 DAY FORECAST */
+.fc-scroll{overflow-x:auto;padding-bottom:4px}
+.fc-row{display:flex;gap:8px;min-width:max-content;margin-bottom:14px}
+.fcd{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:10px 12px;text-align:center;min-width:86px;box-shadow:var(--sh);flex-shrink:0}
+.fcd.today{border-color:var(--blue);background:var(--bl)}
+.fcd-nm{font-size:12px;font-weight:600;color:var(--text2)}
+.fcd-dt{font-size:10px;color:var(--text3);margin-bottom:5px}
+.fcd-ic{font-size:22px;margin:4px 0}
+.fcd-mx{font-size:13px;font-weight:600;color:var(--text)}
+.fcd-mn{font-size:11px;color:var(--text3)}
+.fcd-rain{font-size:11px;color:var(--blue);margin-top:3px}
+.fcd-wind{font-size:10px;color:var(--text3)}
+.fcd-uv{font-size:10px;margin-top:2px}
+.fcd-alert{font-size:10px;margin-top:3px;padding:1px 5px;border-radius:8px;display:inline-block}
+
+.hint{font-size:11px;color:var(--text3);margin-top:8px;line-height:1.6}
+footer{text-align:center;padding:20px;font-size:12px;color:var(--text3);border-top:1px solid var(--border);margin-top:10px}
+@media(max-width:540px){.cg{grid-template-columns:1fr}.mg{grid-template-columns:repeat(3,1fr)}.ag{grid-template-columns:1fr}.locname{font-size:18px}.ua-item{grid-template-columns:30px 1fr}}
+</style>
+</head>
+<body>
+<header>
+  <div class="logo">
+    <div class="logo-icon">🌦️</div>
+    <div>
+      <div class="logo-text">भारत मौसम Dashboard</div>
+      <div class="logo-sub">Live Weather — हर गाँव, हर शहर</div>
+    </div>
+  </div>
+  <button class="theme-btn" onclick="toggleTheme()">🌙 Dark</button>
+</header>
+
+<div class="main">
+  <div class="srch">
+    <div class="srow">
+      <input type="text" id="cityIn" class="sinput" placeholder="गाँव / शहर / तहसील (e.g. Barwala, Varanasi, Shimla)" />
+      <button class="btn btnp" onclick="doSearch()">🔍 Search</button>
+      <button class="btn btng" onclick="useGPS()">📍 My Location</button>
+    </div>
+    <div class="chips" id="chips"></div>
+    <div class="errmsg" id="err"></div>
+  </div>
+  <div id="content">
+    <div class="lbox"><div class="lspin"></div><div>आपकी location खोज रहे हैं… / Detecting your location…</div></div>
+  </div>
+</div>
+
+<footer>
+  🌐 Powered by OpenWeatherMap API &nbsp;|&nbsp; हर गाँव-शहर के लिए मुफ़्त मौसम जानकारी<br>
+  <small>छोटे गाँव के लिए नज़दीकी कस्बे का नाम खोजें। For tiny villages, search nearest town/tehsil.</small>
+</footer>
+
+<script>
+const API_KEY = 'bd5e378503939ddaee76f12ad7a97608';
+
+const INDIA_PLACES = [
+  {name:'Delhi',hi:'दिल्ली'},{name:'Mumbai',hi:'मुंबई'},{name:'Varanasi',hi:'वाराणसी'},
+  {name:'Jaipur',hi:'जयपुर'},{name:'Kolkata',hi:'कोलकाता'},{name:'Patna',hi:'पटना'},
+  {name:'Lucknow',hi:'लखनऊ'},{name:'Bhopal',hi:'भोपाल'},{name:'Nagpur',hi:'नागपुर'},
+  {name:'Agra',hi:'आगरा'},{name:'Kanpur',hi:'कानपुर'},{name:'Prayagraj',hi:'प्रयागराज'},
+  {name:'Surat',hi:'सूरत'},{name:'Pune',hi:'पुणे'},{name:'Hyderabad',hi:'हैदराबाद'},
+  {name:'Chennai',hi:'चेन्नई'},{name:'Bengaluru',hi:'बेंगलुरु'},{name:'Ahmedabad',hi:'अहमदाबाद'},
+  {name:'Ranchi',hi:'रांची'},{name:'Raipur',hi:'रायपुर'},{name:'Amritsar',hi:'अमृतसर'},
+  {name:'Chandigarh',hi:'चंडीगढ़'},{name:'Guwahati',hi:'गुवाहाटी'},{name:'Bhubaneswar',hi:'भुवनेश्वर'},
+  {name:'Shimla',hi:'शिमला'},{name:'Dehradun',hi:'देहरादून'},{name:'Haridwar',hi:'हरिद्वार'},
+  {name:'Mathura',hi:'मथुरा'},{name:'Meerut',hi:'मेरठ'},{name:'Gorakhpur',hi:'गोरखपुर'},
+  {name:'Jodhpur',hi:'जोधपुर'},{name:'Udaipur',hi:'उदयपुर'},{name:'Ajmer',hi:'अजमेर'},
+  {name:'Indore',hi:'इंदौर'},{name:'Gwalior',hi:'ग्वालियर'},{name:'Jabalpur',hi:'जबलपुर'},
+  {name:'Nashik',hi:'नाशिक'},{name:'Aurangabad',hi:'औरंगाबाद'},{name:'Coimbatore',hi:'कोयम्बटूर'},
+  {name:'Madurai',hi:'मदुरई'},{name:'Vijayawada',hi:'विजयवाड़ा'},{name:'Visakhapatnam',hi:'विशाखापट्टनम'},
+  {name:'Thiruvananthapuram',hi:'तिरुवनंतपुरम'},{name:'Kochi',hi:'कोच्चि'},{name:'Kozhikode',hi:'कोझिकोड'},
+  {name:'Mangalore',hi:'मंगलुरु'},{name:'Mysore',hi:'मैसूर'},{name:'Srinagar',hi:'श्रीनगर'},
+  {name:'Jammu',hi:'जम्मू'},{name:'Leh',hi:'लेह'},{name:'Panaji',hi:'पणजी'},
+  {name:'Imphal',hi:'इम्फाल'},{name:'Shillong',hi:'शिलांग'},{name:'Agartala',hi:'अगरतला'},
+  {name:'Kohima',hi:'कोहिमा'},{name:'Gangtok',hi:'गंगटोक'},{name:'Port Blair',hi:'पोर्ट ब्लेयर'},
+];
+
+let charts={};
+let darkMode=false;
+
+function toggleTheme(){
+  darkMode=!darkMode;
+  document.body.setAttribute('data-theme',darkMode?'dark':'');
+  document.querySelector('.theme-btn').textContent=darkMode?'☀️ Light':'🌙 Dark';
+  if(window._lc) renderDash(window._lc,window._lf,window._ld);
+}
+
+function buildChips(){
+  document.getElementById('chips').innerHTML=INDIA_PLACES.slice(0,18).map(p=>
+    `<span class="chip" onclick="searchChip('${p.name}',this)">${p.hi}</span>`).join('');
+}
+
+function searchChip(name,el){
+  document.getElementById('cityIn').value=name;
+  document.querySelectorAll('.chip').forEach(c=>c.classList.remove('active'));
+  el&&el.classList.add('active');
+  loadWeather(name);
+}
+
+function doSearch(){const v=document.getElementById('cityIn').value.trim();if(v)loadWeather(v);}
+function useGPS(){
+  setErr('');setLoading('📍 GPS location ढूंढ रहे हैं…');
+  if(!navigator.geolocation){setErr('GPS not supported.');renderDemo();return;}
+  navigator.geolocation.getCurrentPosition(
+    pos=>fetchByCoords(pos.coords.latitude,pos.coords.longitude),
+    ()=>{setErr('GPS denied. Search manually.');loadWeather('Delhi');}
+  );
+}
+function setLoading(msg){document.getElementById('content').innerHTML=`<div class="lbox"><div class="lspin"></div><div>${msg}</div></div>`;}
+function setErr(msg){document.getElementById('err').textContent=msg;}
+function destroyCharts(){Object.values(charts).forEach(c=>{try{c.destroy();}catch(e){}});charts={};}
+
+function wIcon(code){
+  const c=String(code||'');
+  if(c.startsWith('2'))return'⛈️';
+  if(c.startsWith('3'))return'🌦️';
+  if(c.startsWith('5'))return c==='511'?'🌨️':'🌧️';
+  if(c.startsWith('6'))return'❄️';
+  if(c==='711')return'🔥';
+  if(c.startsWith('7'))return'🌫️';
+  if(c==='800')return'☀️';
+  if(c==='801')return'🌤️';
+  if(c==='802')return'⛅';
+  if(c.startsWith('80'))return'☁️';
+  return'🌡️';
+}
+
+function wdHi(deg){
+  return['उत्तर','उत्तरपूर्व','पूर्व','दक्षिणपूर्व','दक्षिण','दक्षिणपश्चिम','पश्चिम','उत्तरपश्चिम'][Math.round((deg||0)/45)%8];
+}
+
+function uvLabel(uv){
+  if(uv<=2)return{l:'Low',hi:'कम',c:'#276749'};
+  if(uv<=5)return{l:'Moderate',hi:'मध्यम',c:'#b7791f'};
+  if(uv<=7)return{l:'High',hi:'अधिक',c:'#c05621'};
+  if(uv<=10)return{l:'Very High',hi:'बहुत अधिक',c:'#c53030'};
+  return{l:'Extreme',hi:'अत्यधिक',c:'#702459'};
+}
+
+function visLabel(km){
+  if(km>=10)return{hi:'स्पष्ट',en:'Clear',ok:true};
+  if(km>=5)return{hi:'ठीक',en:'Moderate',ok:true};
+  if(km>=2)return{hi:'धुंधला',en:'Hazy',ok:false};
+  return{hi:'बहुत खराब',en:'Very Poor',ok:false};
+}
+
+/* ===================== TODAY PRECAUTIONS ===================== */
+function getPrecautions(temp,hum,wind,rain,uv,vis,pres,clouds){
+  const tips=[];
+  const hi=temp-0.55*(1-hum/100)*(temp-14.5);
+  if(uv>=8)tips.push({i:'🕶️',t:'Sunscreen लगाएं',d:'UV अत्यधिक — SPF 50+ sunscreen, टोपी। 11am–3pm बाहर न जाएं।',c:'ared'});
+  else if(uv>=6)tips.push({i:'😎',t:'UV High — सावधान',d:'SPF 30+ sunscreen लगाएं। Hat/dupatta पहनें।',c:'aorg'});
+  else if(uv>=3)tips.push({i:'🌞',t:'UV Moderate',d:'Sunscreen लगाएं। Long sleeves पहनें।',c:'aamb'});
+  if(hi>=54)tips.push({i:'🔥',t:'लू — EXTREME DANGER',d:'Heat index '+Math.round(hi)+'°C! घर में रहें। हर 15 मिनट पानी पिएं। Call 108.',c:'ared'});
+  else if(hi>=41)tips.push({i:'♨️',t:'तेज़ गर्मी',d:'गर्मी-उमस ज़्यादा। दोपहर 12–4 बाहर न जाएं।',c:'aorg'});
+  if(temp<=4)tips.push({i:'🥶',t:'कड़ाके की ठंड',d:'Very cold. गर्म कपड़े। बुज़ुर्ग-बच्चों को ठंडे से बचाएं। Frost संभव।',c:'ablu'});
+  else if(temp<=10)tips.push({i:'🧥',t:'ठंडा मौसम',d:'Cold weather — jacket ज़रूरी।',c:'ablu'});
+  if(rain>=70)tips.push({i:'🚫🚗',t:'गाड़ी न धोएं',d:'बारिश आने वाली है। Don\'t wash your vehicle.',c:'ablu'});
+  if(rain>=50)tips.push({i:'🦟',t:'मच्छर सावधानी',d:'बारिश बाद मच्छर बढ़ेंगे। Repellent लगाएं।',c:'aorg'});
+  if(rain>=60)tips.push({i:'🛣️',t:'फिसलन — Slippery Road',d:'गाड़ी धीरे चलाएं। Wet roads ahead.',c:'ared'});
+  if(rain>=65)tips.push({i:'🧳',t:'यात्रा उचित नहीं',d:'Heavy rain — Trip not suitable. Wait for better weather.',c:'aorg'});
+  if(vis<2)tips.push({i:'⚠️',t:'दृश्यता बहुत कम',d:`Visibility ${vis.toFixed(1)} km — कोहरा। Headlights on. बहुत धीरे चलाएं।`,c:'ared'});
+  else if(vis<5)tips.push({i:'🌫️',t:'कम दृश्यता',d:`Visibility ${vis.toFixed(1)} km — Hazy. रात में ध्यान दें।`,c:'aamb'});
+  if(wind>=60)tips.push({i:'💨',t:'तूफ़ान — Storm Warning',d:`Wind ${Math.round(wind)} km/h — घर में रहें। ढीली चीज़ें बांधें।`,c:'ared'});
+  else if(wind>=35)tips.push({i:'🌬️',t:'तेज़ हवा',d:`Wind ${Math.round(wind)} km/h — Two-wheelers सावधान।`,c:'aamb'});
+  if(pres<990)tips.push({i:'🌀',t:'कम दबाव — Cyclone Risk',d:`Pressure ${pres} hPa — तूफ़ान/चक्रवात की आशंका। Alert रहें।`,c:'ared'});
+  else if(pres<1000)tips.push({i:'⬇️',t:'वायुदाब कम',d:`Pressure ${pres} hPa — बारिश जल्द संभव।`,c:'aamb'});
+  if(clouds>=80&&rain<30)tips.push({i:'☁️',t:'बादल छाए हैं',d:'Overcast. घर के काम के लिए अच्छा दिन।',c:'ablu'});
+  if(tips.length===0)tips.push({i:'✅',t:'मौसम अच्छा है!',d:'Enjoy your day! बाहर जाने के लिए अच्छा दिन।',c:'agrn'});
+  return tips;
+}
+
+/* ===================== DON'T GO OUTSIDE TIMELINE ===================== */
+function getDontGoTimeline(fcList){
+  const now=new Date();
+  const todayStr=now.toISOString().split('T')[0];
+  const todaySlots=fcList.filter(f=>(f.dt_txt||'').startsWith(todayStr)).slice(0,8);
+  if(todaySlots.length===0) return [];
+
+  return todaySlots.map(f=>{
+    const hr=parseInt((f.dt_txt||'').split(' ')[1]||'0');
+    const t=parseFloat(f.main.temp.toFixed(1));
+    const hum=f.main.humidity;
+    const wind=Math.round((f.wind.speed||0)*3.6);
+    const rain=Math.round((f.pop||0)*100);
+    const vis=(f.visibility||10000)/1000;
+    const hi=t-0.55*(1-hum/100)*(t-14.5);
+    const isNight=hr>=22||hr<6;
+    const isMorning=hr>=6&&hr<9;
+    const isAfternoon=hr>=11&&hr<16;
+
+    let danger=0,reasons=[];
+
+    if(hi>=54){danger=Math.max(danger,4);reasons.push('लू EXTREME')}
+    else if(hi>=41){danger=Math.max(danger,3);reasons.push('बहुत गर्मी')}
+    else if(hi>=36){danger=Math.max(danger,2);reasons.push('गर्मी-उमस')}
+    if(t<=2){danger=Math.max(danger,4);reasons.push('शीत लहर')}
+    else if(t<=5){danger=Math.max(danger,3);reasons.push('कड़ाके ठंड')}
+    if(wind>=70){danger=Math.max(danger,4);reasons.push('आंधी EXTREME')}
+    else if(wind>=50){danger=Math.max(danger,3);reasons.push('तेज़ आंधी')}
+    else if(wind>=35){danger=Math.max(danger,2);reasons.push('तेज़ हवा')}
+    if(rain>=80){danger=Math.max(danger,3);reasons.push('भारी बारिश')}
+    else if(rain>=60){danger=Math.max(danger,2);reasons.push('बारिश संभव')}
+    if(vis<1){danger=Math.max(danger,4);reasons.push('घना कोहरा')}
+    else if(vis<3){danger=Math.max(danger,2);reasons.push('कम दृश्यता')}
+    if(isNight&&danger<2){danger=Math.max(danger,1);reasons.push('रात')}
+
+    const label=hr<10?'0'+hr+':00':hr+':00';
+    const endHr=(hr+3);
+    const endLabel=(endHr<10?'0'+endHr:endHr)+':00';
+    const timeLabel=`${label}–${endLabel}`;
+
+    let cls,status,advice;
+    if(danger>=4){cls='dgo-danger';status='🚨 बाहर न जाएं';advice='Danger — Stay indoors';}
+    else if(danger>=3){cls='dgo-danger';status='⛔ खतरनाक';advice='Very risky outside';}
+    else if(danger>=2){cls='dgo-caution';status='⚠️ सावधानी';advice='Go with caution';}
+    else if(isNight){cls='dgo-night';status='🌙 रात';advice='Night — be careful if going out';}
+    else if(isMorning&&danger<=1){cls='dgo-safe';status='✅ अच्छा समय';advice='Good time to go out';}
+    else if(danger<=1){cls='dgo-safe';status='✅ ठीक है';advice='Safe to go outside';}
+    else{cls='dgo-caution';status='⚠️ ध्यान दें';advice='Take care';}
+
+    const barW=Math.min(100,danger*25+10);
+    const reasonText=reasons.length?reasons.join(', '):'';
+
+    return{timeLabel,t,wind,rain,cls,status,advice,reasonText,barW,danger};
+  });
+}
+
+/* ===================== UPCOMING ALERTS WITH CYCLONE + MONSOON ===================== */
+function getUpcomingAlerts(fcList){
+  const alerts=[];
+  const special=[];
+  const days={};
+  fcList.forEach(f=>{
+    const dk=(f.dt_txt||'').split(' ')[0];
+    if(dk){if(!days[dk])days[dk]=[];days[dk].push(f);}
+  });
+  const HD=['रवि','सोम','मंगल','बुध','गुरु','शुक्र','शनि'];
+
+  /* Check for monsoon pattern across all data */
+  const allRain=fcList.map(f=>Math.round((f.pop||0)*100));
+  const consecutiveRainDays=Object.values(days).filter(items=>Math.max(...items.map(i=>Math.round((i.pop||0)*100)))>=60).length;
+  const allPressures=fcList.map(f=>f.main.pressure);
+  const minPressureAll=Math.min(...allPressures);
+  const maxWindAll=Math.max(...fcList.map(f=>(f.wind.speed||0)*3.6));
+
+  /* CYCLONE DETECTION — sustained low pressure + high winds */
+  if(minPressureAll<980&&maxWindAll>=64){
+    special.push({type:'cyclone',maxWind:Math.round(maxWindAll),minPres:Math.round(minPressureAll)});
+  } else if(minPressureAll<990&&maxWindAll>=50){
+    special.push({type:'cyclone_watch',maxWind:Math.round(maxWindAll),minPres:Math.round(minPressureAll)});
+  }
+
+  /* MONSOON DETECTION — many consecutive rainy days */
+  if(consecutiveRainDays>=4){
+    const avgRain=Math.round(allRain.reduce((a,b)=>a+b,0)/allRain.length);
+    special.push({type:'monsoon',days:consecutiveRainDays,avgRain});
+  }
+
+  Object.entries(days).forEach(([date,items],idx)=>{
+    const d=new Date(date+'T12:00:00');
+    const dl=idx===0?'आज / Today':idx===1?'कल / Tomorrow':`${HD[d.getDay()]} (${d.toLocaleDateString('en-IN',{day:'numeric',month:'short'})})`;
+    const ts=items.map(i=>i.main.temp);
+    const maxT=Math.max(...ts),minT=Math.min(...ts);
+    const maxW=Math.max(...items.map(i=>(i.wind.speed||0)*3.6));
+    const maxR=Math.max(...items.map(i=>Math.round((i.pop||0)*100)));
+    const avgH=Math.round(items.reduce((a,i)=>a+i.main.humidity,0)/items.length);
+    const minP=Math.min(...items.map(i=>i.main.pressure));
+    const minV=Math.min(...items.map(i=>(i.visibility||10000)/1000));
+    const codes=items.map(i=>String(i.weather[0].id));
+    const hasThunder=codes.some(c=>c.startsWith('2'));
+    const hasHeavyRain=codes.some(c=>['502','503','504','522','531'].includes(c));
+    const hasSnow=codes.some(c=>c.startsWith('6'));
+    const hasFog=codes.some(c=>c.startsWith('7'));
+    const hi=maxT-0.55*(1-avgH/100)*(maxT-14.5);
+
+    /* Heatwave */
+    if(maxT>=45)alerts.push({i:'🔥',c:'u-red',w:dl,s:'EXTREME',t:`लू — Heatwave DANGER (${Math.round(maxT)}°C)`,
+      d:`तापमान ${Math.round(maxT)}°C। Heat index ${Math.round(hi)}°C। घर से बाहर न जाएं।`,
+      a:'✅ हर 15 मिनट पानी | ORS तैयार रखें | 108 call करें | खिड़कियां बंद रखें दोपहर को'});
+    else if(maxT>=42)alerts.push({i:'♨️',c:'u-org',w:dl,s:'HIGH',t:`तेज़ गर्मी — Severe Heat (${Math.round(maxT)}°C)`,
+      d:`बहुत तेज़ गर्मी। 11am–4pm बाहर न जाएं।`,
+      a:'✅ सूती कपड़े | छाता | दोपहर घर में रहें | ढेर पानी पिएं'});
+    else if(maxT>=38&&hi>=40)alerts.push({i:'☀️',c:'u-amb',w:dl,s:'MODERATE',t:`गर्म दिन — Hot Day (${Math.round(maxT)}°C)`,
+      d:`Heat index ${Math.round(hi)}°C। गर्मी-उमस।`,a:'✅ Sunscreen | हल्के कपड़े | पानी पिएं'});
+
+    /* Cold wave */
+    if(minT<=2)alerts.push({i:'🥶',c:'u-red',w:dl,s:'EXTREME',t:`शीत लहर — Cold Wave DANGER (${Math.round(minT)}°C)`,
+      d:`${Math.round(minT)}°C तक गिरेगा। Frost। पाइप फटने का खतरा।`,
+      a:'✅ गर्म कपड़े | पशुओं को अंदर | पाइप wrap करें | रात को बाहर न जाएं'});
+    else if(minT<=5)alerts.push({i:'🧊',c:'u-org',w:dl,s:'HIGH',t:`ठंडी रात (${Math.round(minT)}°C)`,
+      d:`रात ${Math.round(minT)}°C। बच्चे-बुज़ुर्ग सावधान।`,a:'✅ गर्म कपड़े | खिड़कियां बंद | heater सावधानी से'});
+    else if(minT<=10)alerts.push({i:'🧥',c:'u-blu',w:dl,s:'LOW',t:`ठंडा मौसम (${Math.round(minT)}°C)`,
+      d:'रात ठंडी रहेगी।',a:'✅ Jacket पहनें'});
+
+    /* Cyclone / severe storm per day */
+    if(maxW>=90)alerts.push({i:'🌀',c:'u-red',w:dl,s:'EXTREME',t:`चक्रवाती तूफ़ान — Cyclone (${Math.round(maxW)} km/h)`,
+      d:`${Math.round(maxW)} km/h हवाएं। पेड़-खंभे गिर सकते हैं। बाहर बिल्कुल न जाएं।`,
+      a:'✅ घर में रहें | मोबाइल charge रखें | 112 Emergency | ढीली चीज़ें बांधें | खिड़की-दरवाज़े बंद'});
+    else if(maxW>=60)alerts.push({i:'💨',c:'u-red',w:dl,s:'HIGH',t:`तेज़ आंधी — Severe Storm (${Math.round(maxW)} km/h)`,
+      d:`तूफ़ानी हवाएं। टीन की छत, साइनबोर्ड गिर सकते हैं।`,
+      a:'✅ दोपहिया न चलाएं | कच्चे मकान वाले सावधान | खुले मैदान से दूर'});
+    else if(maxW>=40)alerts.push({i:'🌬️',c:'u-amb',w:dl,s:'MODERATE',t:`तेज़ हवाएं (${Math.round(maxW)} km/h)`,
+      d:'Two-wheelers सावधानी से।',a:'✅ दोपहिया धीरे चलाएं'});
+
+    /* Thunderstorm */
+    if(hasThunder&&maxR>=70)alerts.push({i:'⛈️',c:'u-red',w:dl,s:'HIGH',t:`गरज-भारी बारिश — Thunderstorm`,
+      d:`बिजली गिरने का खतरा। ${maxR}% बारिश। खेत-मैदान में न जाएं।`,
+      a:'✅ पेड़ के नीचे न खड़े हों | खेत छोड़ें | Electronics plug-out | पक्के मकान में रहें'});
+    else if(hasThunder)alerts.push({i:'🌩️',c:'u-org',w:dl,s:'MODERATE',t:`बिजली का खतरा — Lightning Risk`,
+      d:'गरज के साथ बिजली गिर सकती है।',a:'✅ पेड़-खंभे से दूर | खेत बंद करें'});
+
+    /* Heavy rain / monsoon rain */
+    if(!hasThunder&&hasHeavyRain)alerts.push({i:'🌊',c:'u-org',w:dl,s:'HIGH',t:`भारी बारिश — Heavy Rainfall (${maxR}%)`,
+      d:'अत्यधिक वर्षा। नदी-नाले उफान पर। निचले इलाकों में जलभराव।',
+      a:'✅ नदी किनारे न जाएं | निचले इलाकों को छोड़ें | छत निकासी जांचें | मच्छर repellent'});
+    else if(maxR>=70&&!hasThunder)alerts.push({i:'🌧️',c:'u-blu',w:dl,s:'MODERATE',t:`बारिश — Rain Expected (${maxR}%)`,
+      d:'Road slippery होंगी। छाता रखें।',a:'✅ छाता | गाड़ी धीरे | गाड़ी न धोएं'});
+
+    /* Monsoon per day */
+    if(maxR>=60&&avgH>=75&&codes.some(c=>c.startsWith('5')))alerts.push({i:'🌧️',c:'u-pnk',w:dl,s:'MODERATE',t:`मानसूनी बारिश — Monsoon Rain`,
+      d:`नमी ${avgH}%, बारिश ${maxR}%। Monsoon conditions. सड़कें भरी रहेंगी। खेत में काम संभव।`,
+      a:'✅ रेनकोट रखें | नालों के पास न जाएं | बच्चों को बाहर कम जाने दें | मच्छर से बचें'});
+
+    /* Snow */
+    if(hasSnow)alerts.push({i:'❄️',c:'u-prl',w:dl,s:'HIGH',t:`बर्फबारी — Snowfall`,
+      d:'बर्फ गिरेगी। सड़कें बंद हो सकती हैं।',
+      a:'✅ यात्रा न करें | गर्म कपड़े | जानवरों को अंदर | Road check करके निकलें'});
+
+    /* Fog */
+    if(hasFog||minV<0.5)alerts.push({i:'🌫️',c:'u-tel',w:dl,s:'HIGH',t:`घना कोहरा — Dense Fog`,
+      d:`दृश्यता ${minV.toFixed(1)} km। दुर्घटना का खतरा। Train देर से।`,
+      a:'✅ Fog lights | 20–30 km/h से ज़्यादा नहीं | सुबह जल्दी न निकलें | Train/Bus check करें'});
+    else if(minV<2)alerts.push({i:'🌁',c:'u-tel',w:dl,s:'MODERATE',t:`कम दृश्यता (${minV.toFixed(1)} km)`,
+      d:'कोहरा या धुंध। सड़क पर सावधान।',a:'✅ Headlights on | धीरे चलाएं'});
+
+    /* Pressure */
+    if(minP<990)alerts.push({i:'🌀',c:'u-red',w:dl,s:'HIGH',t:`अत्यंत कम दबाव — Very Low Pressure (${Math.round(minP)} hPa)`,
+      d:`${Math.round(minP)} hPa। चक्रवात/तूफ़ान की आशंका।`,
+      a:'✅ IMD alerts देखें | समुद्र किनारे न जाएं | घर में रहें'});
+    else if(minP<1000)alerts.push({i:'⬇️',c:'u-amb',w:dl,s:'LOW',t:`कम वायुदाब (${Math.round(minP)} hPa)`,
+      d:'बारिश-हवाएं संभव।',a:'✅ बारिश के लिए तैयार रहें | कपड़े घर में सुखाएं'});
+
+    /* Humidity */
+    if(avgH>=85&&maxT>=30)alerts.push({i:'💦',c:'u-org',w:dl,s:'MODERATE',t:`उमस — Extreme Humidity (${avgH}%)`,
+      d:'गर्मी+नमी दोनों अधिक। बाहर काम कठिन।',
+      a:'✅ ढेर पानी पिएं | AC/cooler में रहें | बाहर कम समय'});
+  });
+
+  alerts.sort((a,b)=>({EXTREME:0,HIGH:1,MODERATE:2,LOW:3}[a.s]||3)-({EXTREME:0,HIGH:1,MODERATE:2,LOW:3}[b.s]||3));
+  return{alerts,special};
+}
+
+/* ===================== CHART HELPERS ===================== */
+function mkChart(id,labels,data,color,unit,type='line'){
+  const ctx=document.getElementById(id);if(!ctx)return null;
+  const gc=darkMode?'rgba(255,255,255,.07)':'rgba(0,0,0,.06)';
+  const tc=darkMode?'#718096':'#4a5568';
+  return new Chart(ctx,{
+    type,
+    data:{labels,datasets:[{data,borderColor:color,backgroundColor:type==='bar'?color+'aa':color+'20',fill:type!=='bar',tension:.4,pointRadius:type==='bar'?0:2,pointBackgroundColor:color,borderWidth:type==='bar'?0:2,barPercentage:.5}]},
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>c.parsed.y.toFixed(1)+' '+unit}}},
+      scales:{x:{ticks:{font:{size:9},color:tc,maxRotation:45,autoSkip:true,maxTicksLimit:8},grid:{display:false}},
+              y:{ticks:{font:{size:9},color:tc,callback:v=>Math.round(v)+unit},grid:{color:gc}}}}
+  });
+}
+
+function mkDayNightChart(id,fcList){
+  const ctx=document.getElementById(id);if(!ctx)return null;
+  const daySlots=fcList.slice(0,24);
+  const labels=daySlots.map(f=>{
+    const s=f.dt_txt||'';return s.includes(' ')?s.split(' ')[1].slice(0,5):s;
+  });
+  const temps=daySlots.map(f=>parseFloat(f.main.temp.toFixed(1)));
+  const feelsLike=daySlots.map(f=>parseFloat(f.main.feels_like.toFixed(1)));
+
+  const bgColors=daySlots.map(f=>{
+    const hr=parseInt((f.dt_txt||'').split(' ')[1]||'12');
+    if(hr>=6&&hr<12) return 'rgba(251,191,36,0.12)';
+    if(hr>=12&&hr<18) return 'rgba(239,68,68,0.12)';
+    if(hr>=18&&hr<21) return 'rgba(249,115,22,0.12)';
+    return 'rgba(30,58,138,0.18)';
+  });
+
+  const gc=darkMode?'rgba(255,255,255,.07)':'rgba(0,0,0,.06)';
+  const tc=darkMode?'#718096':'#4a5568';
+  return new Chart(ctx,{
+    type:'line',
+    data:{
+      labels,
+      datasets:[
+        {label:'Temperature',data:temps,borderColor:'#c05621',backgroundColor:'rgba(192,86,33,0.1)',fill:true,tension:.4,pointRadius:2,borderWidth:2,yAxisID:'y'},
+        {label:'Feels Like',data:feelsLike,borderColor:'#553c9a',backgroundColor:'rgba(85,60,154,0.05)',fill:false,tension:.4,pointRadius:0,borderWidth:1.5,borderDash:[4,3],yAxisID:'y'},
+      ]
+    },
+    options:{
+      responsive:true,maintainAspectRatio:false,
+      plugins:{
+        legend:{display:false},
+        tooltip:{callbacks:{label:c=>`${c.dataset.label}: ${c.parsed.y.toFixed(1)}°C`}},
+      },
+      scales:{
+        x:{ticks:{font:{size:9},color:tc,maxRotation:45,autoSkip:true,maxTicksLimit:10},grid:{color:bgColors}},
+        y:{ticks:{font:{size:9},color:tc,callback:v=>Math.round(v)+'°C'},grid:{color:gc},position:'left'},
+      }
+    }
+  });
+}
+
+/* ===================== FETCH FUNCTIONS ===================== */
+async function fetchByCoords(lat,lon){
+  setErr('');
+  try{
+    const[cR,fR]=await Promise.all([
+      fetch(`https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&appid=${API_KEY}&units=metric&lang=hi`),
+      fetch(`https://api.openweathermap.org/data/2.5/forecast?lat=${lat}&lon=${lon}&appid=${API_KEY}&units=metric`)
+    ]);
+    if(!cR.ok)throw new Error('API error');
+    const cur=await cR.json();const fc=await fR.json();
+    let uvi=0;
+    try{const uvR=await fetch(`https://api.openweathermap.org/data/2.5/uvi?lat=${lat}&lon=${lon}&appid=${API_KEY}`);
+      if(uvR.ok){const uvD=await uvR.json();uvi=uvD.value||0;}}catch(e){}
+    cur._uvi=uvi;cur._approx=false;
+    document.getElementById('cityIn').value=cur.name;
+    renderDash(cur,fc,false);
+  }catch(e){setErr('Location error. Showing Delhi.');loadWeather('Delhi');}
+}
+
+async function loadWeather(city){
+  setErr('');setLoading('🌐 Live data लोड हो रहा है…');destroyCharts();
+  try{
+    let cR=await fetch(`https://api.openweathermap.org/data/2.5/weather?q=${encodeURIComponent(city)},IN&appid=${API_KEY}&units=metric&lang=hi`);
+    let approx=false;
+    if(!cR.ok){cR=await fetch(`https://api.openweathermap.org/data/2.5/weather?q=${encodeURIComponent(city)}&appid=${API_KEY}&units=metric&lang=hi`);approx=true;}
+    if(!cR.ok){
+      const nb=await findNearest(city);
+      if(nb){setErr(`"${city}" नहीं मिला। Showing nearest: ${nb}`);loadWeather(nb);return;}
+      throw new Error(`"${city}" not found. Try nearest town/tehsil.`);
+    }
+    const cur=await cR.json();
+    const fR=await fetch(`https://api.openweathermap.org/data/2.5/forecast?lat=${cur.coord.lat}&lon=${cur.coord.lon}&appid=${API_KEY}&units=metric`);
+    const fc=await fR.json();
+    let uvi=0;
+    try{const uvR=await fetch(`https://api.openweathermap.org/data/2.5/uvi?lat=${cur.coord.lat}&lon=${cur.coord.lon}&appid=${API_KEY}`);
+      if(uvR.ok){const uvD=await uvR.json();uvi=uvD.value||0;}}catch(e){}
+    cur._uvi=uvi;cur._approx=approx;
+    renderDash(cur,fc,false);
+  }catch(e){setErr(e.message);renderDemo(city);}
+}
+
+async function findNearest(q){
+  const fb={'barwala':'Hisar','bhitaura':'Lucknow','nawada':'Patna','deoria':'Gorakhpur',
+    'basti':'Gorakhpur','sitapur':'Lucknow','hardoi':'Lucknow','unnao':'Lucknow',
+    'mirzapur':'Varanasi','bhadohi':'Varanasi','jaunpur':'Varanasi','azamgarh':'Varanasi',
+    'ballia':'Varanasi','ghazipur':'Varanasi','kupwara':'Srinagar','pulwama':'Srinagar',
+    'anantapur':'Kurnool','nalgonda':'Hyderabad','warangal':'Hyderabad',
+    'bhavnagar':'Rajkot','junagadh':'Rajkot','anand':'Vadodara','muzaffarpur':'Patna',
+    'darbhanga':'Patna','samastipur':'Patna','begusarai':'Patna','rohtas':'Patna',
+    'purnea':'Bhagalpur','katihar':'Bhagalpur','araria':'Bhagalpur'};
+  return fb[q.toLowerCase()]||null;
+}
+
+function renderDemo(city){
+  const fl=Array.from({length:40},(_,i)=>({
+    dt_txt:new Date(Date.now()+i*3*3600000).toISOString().replace('T',' ').slice(0,16),
+    main:{temp:30+Math.sin(i*.35)*6,feels_like:32+Math.sin(i*.35)*5,humidity:55+Math.sin(i*.3)*15,pressure:1010+Math.sin(i*.2)*8},
+    wind:{speed:3+Math.abs(Math.cos(i*.5))*2,deg:220},
+    pop:Math.max(0,.2+Math.sin(i*.65)*.25),
+    weather:[{id:800}],clouds:{all:30},visibility:8000
+  }));
+  const cur={name:city||'Your Location',sys:{country:'IN'},coord:{lat:28.6,lon:77.2},
+    main:{temp:33,feels_like:36,humidity:62,pressure:1008},
+    wind:{speed:4,deg:220},weather:[{id:800,description:'साफ़ आसमान'}],
+    visibility:8000,clouds:{all:30},_uvi:6,_approx:false};
+  renderDash(cur,{list:fl},true);
+}
+
+/* ===================== MAIN RENDER ===================== */
+function renderDash(cur,fc,isDemo){
+  destroyCharts();
+  window._lc=cur;window._lf=fc;window._ld=isDemo;
+
+  const temp=Math.round(cur.main.temp);
+  const feels=Math.round(cur.main.feels_like);
+  const hum=cur.main.humidity;
+  const pres=Math.round(cur.main.pressure);
+  const windSpd=Math.round((cur.wind.speed||0)*3.6);
+  const windD=wdHi(cur.wind.deg);
+  const visKm=(cur.visibility||10000)/1000;
+  const visInfo=visLabel(visKm);
+  const rainPct=Math.round((fc.list[0]?.pop||0)*100);
+  const uvi=Math.round(cur._uvi||0);
+  const uvInfo=uvLabel(uvi);
+  const clouds=cur.clouds?.all||0;
+  const desc=cur.weather[0].description;
+  const icon=wIcon(cur.weather[0].id);
+  const matchP=INDIA_PLACES.find(p=>p.name.toLowerCase()===cur.name.toLowerCase());
+  const hiName=matchP?matchP.hi:cur.name;
+  const now=new Date();
+
+  const precautions=getPrecautions(temp,hum,windSpd,rainPct,uvi,visKm,pres,clouds);
+  const dontGoSlots=getDontGoTimeline(fc.list);
+  const{alerts,special}=getUpcomingAlerts(fc.list);
+
+  const fcLabels=fc.list.slice(0,16).map(f=>{const s=f.dt_txt||'';return s.includes(' ')?s.split(' ')[1].slice(0,5):s;});
+  const tData=fc.list.slice(0,16).map(f=>parseFloat(f.main.temp.toFixed(1)));
+  const hData=fc.list.slice(0,16).map(f=>Math.round(f.main.humidity));
+  const wData=fc.list.slice(0,16).map(f=>Math.round((f.wind.speed||0)*3.6));
+  const rData=fc.list.slice(0,16).map(f=>Math.round((f.pop||0)*100));
+  const pData=fc.list.slice(0,16).map(f=>Math.round(f.main.pressure));
+
+  const days={};
+  fc.list.forEach(f=>{const dk=(f.dt_txt||'').split(' ')[0];if(dk){if(!days[dk])days[dk]=[];days[dk].push(f);}});
+  const HD=['रवि','सोम','मंगल','बुध','गुरु','शुक्र','शनि'];
+  const dayFc=Object.entries(days).slice(0,10).map(([date,items],idx)=>{
+    const ts=items.map(i=>i.main.temp);
+    const d=new Date(date+'T12:00:00');
+    const maxR=Math.max(...items.map(i=>Math.round((i.pop||0)*100)));
+    const avgW=Math.round(items.reduce((a,i)=>a+(i.wind.speed||0)*3.6,0)/items.length);
+    const estUV=Math.max(0,uvi-idx*.3+(maxR>50?-2:0));
+    const uvI=uvLabel(Math.round(estUV));
+    const maxW=Math.max(...items.map(i=>(i.wind.speed||0)*3.6));
+    let alertEmoji='';
+    if(maxW>=70||Math.max(...items.map(i=>i.main.temp))>=45)alertEmoji='🚨';
+    else if(maxR>=70||maxW>=40)alertEmoji='⚠️';
+    return{nm:HD[d.getDay()],date:d.toLocaleDateString('en-IN',{day:'numeric',month:'short'}),
+      ic:wIcon(items[Math.floor(items.length/2)].weather[0].id),
+      mx:Math.round(Math.max(...ts)),mn:Math.round(Math.min(...ts)),
+      rain:maxR,wind:avgW,uvI,isToday:idx===0,alertEmoji};
+  });
+
+  const cc=darkMode?{t:'#f6ad55',h:'#63b3ed',r:'#68d391',w:'#b794f4',p:'#4fd1c5'}:{t:'#c05621',h:'#2b6cb0',r:'#276749',w:'#553c9a',p:'#2c7a7b'};
+
+  document.getElementById('content').innerHTML=`
+    <div class="locbar">
+      <div class="locname">${hiName} — ${cur.name}</div>
+      <div class="locsub">${cur.sys.country} &nbsp;${icon}&nbsp; ${desc}</div>
+      ${isDemo?'<span class="badge bdemo">⚠️ Demo</span>':'<span class="badge blive">🟢 Live</span>'}
+      ${cur._approx?'<span class="badge bapx">📍 Approx</span>':''}
+    </div>
+    <div class="updated">🕐 Updated: ${now.toLocaleTimeString('hi-IN')}&nbsp;|&nbsp;${cur.coord?.lat?.toFixed(2)||'—'}°N, ${cur.coord?.lon?.toFixed(2)||'—'}°E</div>
+
+    ${special.map(s=>{
+      if(s.type==='cyclone') return `<div class="special-banner sb-cyclone">
+        <div class="sb-icon">🌀</div>
+        <div class="sb-body">
+          <div class="sb-title">⚠️ CYCLONE / SEVERE STORM WARNING — चक्रवात चेतावनी</div>
+          <div class="sb-desc">अत्यंत कम वायुदाब ${s.minPres} hPa + ${s.maxWind} km/h हवाएं detected। Cyclonic conditions in your area. This is a DANGEROUS situation.</div>
+          <div class="sb-do">🚨 तुरंत करें / Do NOW:</div>
+          <div class="sb-steps">1. घर के अंदर रहें — Stay indoors immediately<br>2. खिड़की-दरवाज़े बंद करें — Shut all windows & doors<br>3. मोबाइल 100% charge करें — Charge all devices<br>4. Emergency: 112 (Police) | 108 (Medical) | 1070 (NDRF)<br>5. ढीली चीज़ें, साइनबोर्ड, टीन बांधें — Secure loose objects<br>6. पेड़ के नीचे, नदी किनारे बिल्कुल न जाएं<br>7. IMD website / TV / Radio पर updates लें</div>
+        </div>
+      </div>`;
+      if(s.type==='cyclone_watch') return `<div class="special-banner sb-cyclone">
+        <div class="sb-icon">🌀</div>
+        <div class="sb-body">
+          <div class="sb-title">⚠️ CYCLONE WATCH — चक्रवात की निगरानी</div>
+          <div class="sb-desc">Pressure ${s.minPres} hPa, wind ${s.maxWind} km/h। Cyclone conditions developing. Stay alert and monitor weather updates closely.</div>
+          <div class="sb-do">सावधानी:</div>
+          <div class="sb-steps">✅ IMD अलर्ट देखते रहें | घर मज़बूत करें | Emergency kit तैयार रखें | 112 save करें</div>
+        </div>
+      </div>`;
+      if(s.type==='monsoon') return `<div class="special-banner sb-monsoon">
+        <div class="sb-icon">🌧️</div>
+        <div class="sb-body">
+          <div class="sb-title">🌧️ मानसून — Monsoon Season Active</div>
+          <div class="sb-desc">अगले ${s.days} दिनों में लगातार बारिश (औसत ${s.avgRain}%)। Monsoon conditions active in your region. खेती के लिए अच्छा, लेकिन बाढ़ से सावधान।</div>
+          <div class="sb-do">मानसून सावधानियां:</div>
+          <div class="sb-steps">✅ नदी-नाले से दूर रहें | बच्चों को खुले नालों से दूर रखें<br>✅ घर की छत का पानी निकास जांचें | मच्छरदानी लगाएं<br>✅ पानी उबालकर पिएं | बाहर का खाना न खाएं<br>✅ खेत में जल निकासी की व्यवस्था करें | फसल की देखभाल करें</div>
+        </div>
+      </div>`;
+      return '';
+    }).join('')}
+
+    <div class="stitle">⚠️ आज की सावधानियां / Today's Precautions</div>
+    <div class="ag">
+      ${precautions.map(p=>`<div class="ac ${p.c}"><span class="ai">${p.i}</span><div><div class="at">${p.t}</div><div class="ad">${p.d}</div></div></div>`).join('')}
+    </div>
+
+    <div class="dgo-wrap">
+      <div class="dgo-title">🏠 आज घर से कब न निकलें / When NOT to go outside today</div>
+      <div class="dgo-timeline" id="dgoTimeline"></div>
+    </div>
+
+    <div class="ua-wrap">
+      <div class="ua-hdr"><div class="pulse"></div>🚨 आने वाले दिनों की चेतावनियां / Upcoming Weather Alerts</div>
+      ${alerts.length===0?'<div class="noalert">✅ अगले 5 दिन मौसम सामान्य। No major alerts. Safe to plan!</div>':
+        `<div class="ua-list">${alerts.map(a=>`
+          <div class="ua-item ${a.c}">
+            <div class="ua-icon">${a.i}</div>
+            <div><div class="ua-title">${a.t}</div><div class="ua-desc">${a.d}</div><div class="ua-act">${a.a}</div></div>
+            <div class="ua-when">${a.w}</div>
+          </div>`).join('')}</div>`}
+    </div>
+
+    <div class="stitle">📊 अभी का मौसम / Current Conditions</div>
+    <div class="mg">
+      <div class="mc"><div class="micon">🌡️</div><div class="mhi">तापमान</div><div class="mlbl">Temperature</div><div class="mval">${temp}<span class="munit">°C</span></div><div class="msub">Feels ${feels}°C</div></div>
+      <div class="mc"><div class="micon">💧</div><div class="mhi">नमी</div><div class="mlbl">Humidity</div><div class="mval">${hum}<span class="munit">%</span></div><div class="msub">${hum<40?'शुष्क':hum<70?'सामान्य':'उमस'}</div></div>
+      <div class="mc"><div class="micon">🌧️</div><div class="mhi">बारिश</div><div class="mlbl">Rain Chance</div><div class="mval">${rainPct}<span class="munit">%</span></div><div class="msub">${rainPct<20?'नहीं':rainPct<60?'संभव':'होगी'}</div></div>
+      <div class="mc"><div class="micon">💨</div><div class="mhi">हवा</div><div class="mlbl">Wind Speed</div><div class="mval">${windSpd}<span class="munit">km/h</span></div><div class="msub">${windD}</div></div>
+      <div class="mc" style="border-color:${visInfo.ok?'':'#c53030'}"><div class="micon">👁️</div><div class="mhi">दृश्यता</div><div class="mlbl">Visibility</div><div class="mval">${visKm.toFixed(1)}<span class="munit">km</span></div><div class="msub">${visInfo.hi}</div></div>
+      <div class="mc" style="border-color:${uvInfo.c}44"><div class="micon">☀️</div><div class="mhi">UV किरणें</div><div class="mlbl">UV Index</div><div class="mval" style="color:${uvInfo.c}">${uvi}</div><div class="msub" style="color:${uvInfo.c}">${uvInfo.hi} / ${uvInfo.l}</div></div>
+      <div class="mc"><div class="micon">🔵</div><div class="mhi">वायु दबाव</div><div class="mlbl">Pressure</div><div class="mval">${pres}<span class="munit">hPa</span></div><div class="msub">${pres<1000?'कम':pres<1020?'सामान्य':'अधिक'}</div></div>
+      <div class="mc"><div class="micon">☁️</div><div class="mhi">बादल</div><div class="mlbl">Cloud Cover</div><div class="mval">${clouds}<span class="munit">%</span></div><div class="msub">${clouds<20?'साफ़':clouds<60?'आंशिक':'बहुत बादल'}</div></div>
+    </div>
+
+    <div class="stitle">🌗 दिन-रात तापमान ग्राफ / Day & Night Temperature Graph</div>
+    <div class="dn-wrap">
+      <div class="dn-legend">
+        <span><span class="dn-dot" style="background:#c05621"></span>Temperature (°C)</span>
+        <span><span class="dn-dot" style="background:#553c9a"></span>Feels Like (°C)</span>
+        <span style="opacity:.7;font-size:11px">🌅 सुबह=पीला &nbsp; ☀️ दोपहर=लाल &nbsp; 🌆 शाम=नारंगी &nbsp; 🌙 रात=नीला background</span>
+      </div>
+      <div class="cw-tall"><canvas id="cDN" role="img" aria-label="Day night temperature graph"></canvas></div>
+    </div>
+
+    <div class="stitle">📈 48-घंटे ग्राफ / 48-Hour Forecast Graphs</div>
+    <div class="cg">
+      <div class="cc"><div class="ctitle">🌡️ Temperature (°C)</div><div class="cw"><canvas id="cT" role="img" aria-label="Temperature"></canvas></div></div>
+      <div class="cc"><div class="ctitle">💧 Humidity (%)</div><div class="cw"><canvas id="cH" role="img" aria-label="Humidity"></canvas></div></div>
+      <div class="cc"><div class="ctitle">🌧️ Rain Probability (%)</div><div class="cw"><canvas id="cR" role="img" aria-label="Rain"></canvas></div></div>
+      <div class="cc"><div class="ctitle">💨 Wind Speed (km/h)</div><div class="cw"><canvas id="cW" role="img" aria-label="Wind"></canvas></div></div>
+      <div class="cc"><div class="ctitle">🔵 Air Pressure (hPa)</div><div class="cw"><canvas id="cP" role="img" aria-label="Pressure"></canvas></div></div>
+    </div>
+
+    <div class="stitle">📅 10 दिन का अनुमान / 10-Day Forecast</div>
+    <div class="fc-scroll"><div class="fc-row">
+      ${dayFc.map(d=>`<div class="fcd${d.isToday?' today':''}">
+        <div class="fcd-nm">${d.nm}</div><div class="fcd-dt">${d.date}</div>
+        <div class="fcd-ic">${d.ic}</div>
+        <div class="fcd-mx">${d.mx}°C</div><div class="fcd-mn">↓ ${d.mn}°C</div>
+        <div class="fcd-rain">🌧️ ${d.rain}%</div>
+        <div class="fcd-wind">💨 ${d.wind} km/h</div>
+        <div class="fcd-uv" style="color:${d.uvI.c}">UV: ${d.uvI.l}</div>
+        ${d.alertEmoji?`<div class="fcd-alert" style="background:rgba(197,48,48,0.1);color:#c53030">${d.alertEmoji}</div>`:''}
+      </div>`).join('')}
+    </div></div>
+
+    <div class="hint">
+      💡 Free API: 5-day accurate + 5-day estimated data. 10-day precise = paid plan.<br>
+      🏘️ छोटे गाँव के लिए नज़दीकी तहसील या ज़िला मुख्यालय खोजें।<br>
+      🌀 Cyclone detection: based on pressure &lt;980 hPa + wind &gt;64 km/h patterns in forecast data.
+    </div>
+  `;
+
+  /* Render don't-go timeline */
+  const tl=document.getElementById('dgoTimeline');
+  if(tl){
+    if(dontGoSlots.length===0){
+      tl.innerHTML='<div style="font-size:13px;color:var(--text3);padding:8px">Today\'s hourly data not available. Search again in a few hours.</div>';
+    } else {
+      tl.innerHTML=dontGoSlots.map(s=>`
+        <div class="dgo-hour ${s.cls}">
+          <div class="dgo-hr-label">${s.timeLabel}</div>
+          <div style="display:flex;flex-direction:column;gap:3px">
+            <div style="display:flex;align-items:center;gap:8px">
+              <div class="dgo-bar" style="width:${s.barW}%"></div>
+              <span style="font-size:11px;opacity:.8">${s.t.toFixed(1)}°C · 💧${s.timeLabel.includes?s.timeLabel:''}${Math.round(s.rain??0)}% rain · 💨${Math.round(s.wind??0)}km/h</span>
+            </div>
+            ${s.reasonText?`<div style="font-size:10px;opacity:.75">${s.reasonText}</div>`:''}
+          </div>
+          <div class="dgo-status">${s.status}</div>
+        </div>
+      `).join('');
+      /* Fix the desc line */
+      dontGoSlots.forEach((s,i)=>{
+        const rows=tl.querySelectorAll('.dgo-hour');
+        if(rows[i]){
+          const info=rows[i].querySelectorAll('span')[0];
+          if(info) info.textContent=`${s.t.toFixed(1)}°C · 🌧️${s.rain}% rain · 💨${s.wind}km/h`;
+        }
+      });
+    }
+  }
+
+  charts.dn=mkDayNightChart('cDN',fc.list);
+  charts.t=mkChart('cT',fcLabels,tData,cc.t,'°C');
+  charts.h=mkChart('cH',fcLabels,hData,cc.h,'%');
+  charts.r=mkChart('cR',fcLabels,rData,cc.r,'%','bar');
+  charts.w=mkChart('cW',fcLabels,wData,cc.w,'km/h');
+  charts.p=mkChart('cP',fcLabels,pData,cc.p,'hPa');
+}
+
+buildChips();
+document.getElementById('cityIn').addEventListener('keydown',e=>{if(e.key==='Enter')doSearch();});
+
+if(navigator.geolocation){
+  navigator.geolocation.getCurrentPosition(
+    pos=>fetchByCoords(pos.coords.latitude,pos.coords.longitude),
+    ()=>loadWeather('Delhi')
+  );
+}else{loadWeather('Delhi');}
+</script>
+</body>
+</html>
