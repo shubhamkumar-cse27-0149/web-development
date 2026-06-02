@@ -602,8 +602,6 @@ async function findNearest(q){
   return fb[q.toLowerCase()]||null;
 }
 
-
-
 function renderDemo(city){
   const fl=Array.from({length:40},(_,i)=>({
     dt_txt:new Date(Date.now()+i*3*3600000).toISOString().replace('T',' ').slice(0,16),
